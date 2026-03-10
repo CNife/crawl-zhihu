@@ -2,6 +2,8 @@
 """批量爬取所有文章/回答"""
 
 import argparse
+import hashlib
+import re
 import subprocess
 import sys
 import time
@@ -65,19 +67,15 @@ def crawl_item(url: str, output_dir: Path, item_id: str, item_type: str) -> bool
         return False
 
 
-def get_item_type_and_id(url: str, index: int) -> tuple[str, str]:
-    """根据 URL 确定类型和 ID"""
-    if "/p/" in url:
-        item_type = "articles"
-        item_id = f"article-{index:03d}"
-    elif "/answer/" in url:
-        item_type = "answers"
-        item_id = f"answer-{index:03d}"
-    else:
-        item_type = "unknown"
-        item_id = f"unknown-{index:03d}"
+def get_item_type_and_id(url: str) -> tuple[str, str]:
+    if match := re.search(r"/p/(\d+)", url):
+        return "articles", f"article-{match.group(1)}"
 
-    return item_type, item_id
+    if match := re.search(r"/answer/(\d+)", url):
+        return "answers", f"answer-{match.group(1)}"
+
+    url_hash = hashlib.md5(url.encode()).hexdigest()[:8]
+    return "unknown", f"unknown-{url_hash}"
 
 
 def main():
@@ -140,7 +138,7 @@ def main():
     for idx, (content_type, url) in enumerate(urls_to_crawl, 1):
         print(f"\n[{idx}/{len(urls_to_crawl)}] 爬取：{url}")
 
-        item_type, item_id = get_item_type_and_id(url, idx)
+        item_type, item_id = get_item_type_and_id(url)
 
         for retry in range(args.max_retries):
             if crawl_item(url, output_dir, item_id, item_type):
