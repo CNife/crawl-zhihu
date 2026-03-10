@@ -5,7 +5,7 @@ set -euo pipefail
 # ========== 配置参数 ==========
 DEBUG_PORT=9222
 DEBUG_URL="http://localhost:${DEBUG_PORT}/json/version"
-USER_DATA_DIR="./browser_profiles/xueqiu_profile"
+USER_DATA_DIR="./browser_profiles/zhihu_profile"
 CHROME_PATH="chromium"
 
 # ========== 颜色输出 ==========
@@ -30,7 +30,7 @@ check_agent_browser() {
     # 检查并安装 Node.js
     if ! command -v node &> /dev/null; then
         log_info "Node.js 未安装，开始安装..."
-        
+
         # 检测 Linux 发行版并安装
         if command -v apt &> /dev/null; then
             curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
@@ -45,7 +45,7 @@ check_agent_browser() {
             log_error "未找到支持的包管理器，请手动安装 Node.js"
             exit 1
         fi
-        
+
         log_info "Node.js 安装成功：$(node --version)"
     else
         log_info "Node.js 已安装：$(node --version)"
