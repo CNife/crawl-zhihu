@@ -15,7 +15,7 @@ def run_agent_browser(command: list[str], timeout: int = 60) -> tuple[str, str, 
     return result.stdout.strip(), result.stderr.strip(), result.returncode
 
 
-def scroll_to_load_more(username: str, content_type: str, max_scrolls: int = 20):
+def scroll_to_load_more(username: str, content_type: str, max_scrolls: int = 50):
     """滚动加载所有内容"""
     base_url = f"https://www.zhihu.com/people/{username}/{content_type}"
 
@@ -23,8 +23,7 @@ def scroll_to_load_more(username: str, content_type: str, max_scrolls: int = 20)
     run_agent_browser(["open", base_url])
 
     print("等待页面加载...")
-    run_agent_browser(["wait", "--load", "networkidle"])
-    time.sleep(2)
+    time.sleep(5)
 
     selector = (
         '.List-item a[href*="/p/"]'
@@ -34,7 +33,9 @@ def scroll_to_load_more(username: str, content_type: str, max_scrolls: int = 20)
 
     previous_count = 0
     current_count = 0
+    no_change_count = 0
     for i in range(max_scrolls):
+        time.sleep(2)
         count_result = run_agent_browser(
             ["eval", f"document.querySelectorAll({selector!r}).length"]
         )
@@ -43,13 +44,17 @@ def scroll_to_load_more(username: str, content_type: str, max_scrolls: int = 20)
         print(f"第 {i + 1} 次滚动，当前元素数量：{current_count}")
 
         if current_count == previous_count:
-            print("没有更多内容，停止滚动")
-            break
+            no_change_count += 1
+            if no_change_count >= 5:
+                print("没有更多内容，停止滚动")
+                break
+        else:
+            no_change_count = 0
 
         previous_count = current_count
 
         run_agent_browser(["eval", "window.scrollTo(0, document.body.scrollHeight)"])
-        time.sleep(2)
+        time.sleep(3)
 
     return current_count
 
@@ -82,18 +87,33 @@ def extract_urls(username: str, content_type: str) -> list[str]:
         return []
 
 
+def clean_url(url: str) -> str:
+    """清理 URL，移除追踪参数"""
+    if "?" in url:
+        url = url.split("?")[0]
+    return url
+
+
 def save_urls(urls: list[str], output_dir: Path, content_type: str):
-    """保存 URL 到文件"""
+    """保存 URL 到文件（去重并清理）"""
     output_dir.mkdir(parents=True, exist_ok=True)
 
     filename = "articles-urls.txt" if content_type == "posts" else "answers-urls.txt"
     filepath = output_dir / filename
 
+    cleaned_urls = []
+    seen = set()
+    for url in urls:
+        clean = clean_url(url)
+        if clean not in seen:
+            cleaned_urls.append(clean)
+            seen.add(clean)
+
     with open(filepath, "w", encoding="utf-8") as f:
-        for url in urls:
+        for url in cleaned_urls:
             f.write(url + "\n")
 
-    print(f"✓ 已保存 {len(urls)} 个 URL 到 {filepath}")
+    print(f"✓ 已保存 {len(cleaned_urls)} 个 URL 到 {filepath}")
 
 
 def main():
