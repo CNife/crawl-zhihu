@@ -17,11 +17,15 @@ def check_chrome_debug_mode(port: int = 9222) -> bool:
         return False
 
 
-def start_chrome_debug_mode(port: int = 9222, profile_dir: Path | None = None, timeout: int = 10):
+def start_chrome_debug_mode(
+    port: int = 9222, profile_dir: Path | None = None, timeout: int = 10
+):
     """启动 Chromium 调试模式"""
     if profile_dir is None:
         profile_dir = (
-            Path(__file__).parent.parent.parent.parent / "browser_profiles" / "zhihu_profile"
+            Path(__file__).parent.parent.parent.parent
+            / "browser_profiles"
+            / "zhihu_profile"
         )
 
     profile_dir.mkdir(parents=True, exist_ok=True)
@@ -58,7 +62,12 @@ def start_chrome_debug_mode(port: int = 9222, profile_dir: Path | None = None, t
 
     for cmd in chrome_commands:
         try:
-            subprocess.Popen(cmd, start_new_session=True)
+            subprocess.Popen(
+                cmd,
+                start_new_session=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
             print(f"正在启动 Chrome/Chromium 调试模式（端口 {port}）...")
 
             for i in range(timeout):
