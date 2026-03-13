@@ -1,5 +1,6 @@
 browser_profiles/
 .plan/
+.sisyphus/
 
 # Python
 __pycache__/
