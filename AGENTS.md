@@ -50,24 +50,29 @@ ruff check --fix skills/zhihu-crawler/scripts/
 
 ## COMMANDS
 
+**⚠️ 重要：运行 scripts 目录下的脚本前，必须先 cd 到 `skills/zhihu-crawler/` 目录**
+
 ```bash
+# 先进入工作目录
+cd skills/zhihu-crawler/
+
 # 检查环境（Chrome 调试模式）
-uv run python skills/zhihu-crawler/scripts/check_env.py
+uv run python scripts/check_env.py
 
 # 收集 URL
-uv run python skills/zhihu-crawler/scripts/collect_urls.py <username> --type all
+uv run python scripts/collect_urls.py <username> --type all
 
 # 批量爬取
-uv run python skills/zhihu-crawler/scripts/batch_crawl.py --username <username>
+uv run python scripts/batch_crawl.py --username <username>
 
 # 转 Markdown
-uv run python skills/zhihu-crawler/scripts/convert_to_md.py --input output/<username>
+uv run python scripts/convert_to_md.py --input ../../output/<username>
 
 # 生成索引
-uv run python skills/zhihu-crawler/scripts/generate_index.py output/<username>
+uv run python scripts/generate_index.py ../../output/<username>
 
 # 转 PDF
-uv run python skills/zhihu-crawler/scripts/convert_to_pdf.py --input output/<username>
+uv run python scripts/convert_to_pdf.py --input ../../output/<username>
 ```
 
 ## NOTES
