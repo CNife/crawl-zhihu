@@ -25,7 +25,9 @@ def html_to_markdown(html: str, images: list[dict] | None = None) -> str:
 
     if images:
         image_map = {
-            img["original_url"]: img["local_path"] for img in images if img.get("local_path")
+            img["original_url"]: img["local_path"]
+            for img in images
+            if img.get("local_path")
         }
 
         soup = BeautifulSoup(html, "html.parser")
@@ -42,6 +44,10 @@ def html_to_markdown(html: str, images: list[dict] | None = None) -> str:
     markdown = h.handle(html)
 
     markdown = re.sub(r"\n{3,}", "\n\n", markdown)
+
+    markdown = re.sub(
+        r"\[([^\]]+)\]\(https?://zhida\.zhihu\.com/[^)]+\)", r"\1", markdown
+    )
 
     return markdown.strip()
 
@@ -138,7 +144,9 @@ def convert_item(item_dir: Path, output_dir: Path) -> bool:
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="将 HTML 转换为 Markdown")
-    parser.add_argument("--input", required=True, help="输入目录（包含 articles/answers 子目录）")
+    parser.add_argument(
+        "--input", required=True, help="输入目录（包含 articles/answers 子目录）"
+    )
     args = parser.parse_args()
 
     input_dir = Path(args.input)
