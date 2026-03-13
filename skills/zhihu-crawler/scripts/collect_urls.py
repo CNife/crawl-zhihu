@@ -34,12 +34,27 @@ def scroll_to_load_more(username: str, content_type: str, max_scrolls: int = 50)
     previous_count = 0
     current_count = 0
     no_change_count = 0
+    max_wait_time = 60  # 最大等待时间（秒）
+    start_time = time.time()
+
     for i in range(max_scrolls):
-        time.sleep(2)
-        count_result = run_agent_browser(
-            ["eval", f"document.querySelectorAll({selector!r}).length"]
-        )
-        current_count = int(count_result[0]) if count_result[0].isdigit() else 0
+        # 动态等待：检查元素数量是否变化
+        wait_interval = 0.5  # 初始等待间隔
+        max_wait_interval = 2.0  # 最大等待间隔
+        waited_time = 0
+
+        while waited_time < max_wait_time:
+            count_result = run_agent_browser(
+                ["eval", f"document.querySelectorAll({selector!r}).length"]
+            )
+            current_count = int(count_result[0]) if count_result[0].isdigit() else 0
+
+            if current_count > previous_count:
+                break
+
+            time.sleep(wait_interval)
+            waited_time += wait_interval
+            wait_interval = min(wait_interval * 1.5, max_wait_interval)
 
         print(f"第 {i + 1} 次滚动，当前元素数量：{current_count}")
 
@@ -51,10 +66,16 @@ def scroll_to_load_more(username: str, content_type: str, max_scrolls: int = 50)
         else:
             no_change_count = 0
 
+        # 检查总超时
+        if time.time() - start_time > max_wait_time:
+            print("达到最大等待时间，停止滚动")
+            break
+
         previous_count = current_count
 
         run_agent_browser(["eval", "window.scrollTo(0, document.body.scrollHeight)"])
-        time.sleep(3)
+        # 滚动后短暂等待
+        time.sleep(0.5)
 
     return current_count
 

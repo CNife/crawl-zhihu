@@ -82,18 +82,39 @@ def download_image(image_url: str, save_path: Path) -> bool:
 
 
 def download_images(images: list[str], images_dir: Path, item_id: str) -> list[dict]:
-    """下载所有图片"""
+    """下载所有图片（带 URL 去重）"""
+    # URL 去重：记录已下载的 URL 和对应的本地路径
+    seen_urls: dict[str, str | None] = {}
     downloaded_images = []
 
-    for idx, img_url in enumerate(images, 1):
+    # 先过滤出需要实际下载的图片（去重）
+    unique_images = []
+    for img_url in images:
+        if img_url not in seen_urls:
+            unique_images.append(img_url)
+            seen_urls[img_url] = None  # 占位，后面填充
+
+    print(f"去重：{len(images)} 张图片 -> {len(unique_images)} 张唯一图片")
+
+    # 下载唯一图片
+    for idx, img_url in enumerate(unique_images, 1):
         img_name = f"{item_id}-img-{idx:03d}.jpg"
         img_path = images_dir / img_name
 
-        print(f"下载图片 {idx}/{len(images)}: {img_name}")
+        print(f"下载图片 {idx}/{len(unique_images)}: {img_name}")
 
         if download_image(img_url, img_path):
+            # 记录 URL -> 本地路径的映射
+            seen_urls[img_url] = f"../images/{img_name}"
+        else:
+            seen_urls[img_url] = None
+
+    # 构建返回列表（按原始顺序，包含重复 URL 的映射）
+    for img_url in images:
+        local_path = seen_urls.get(img_url)
+        if local_path:
             downloaded_images.append(
-                {"original_url": img_url, "local_path": f"../images/{img_name}"}
+                {"original_url": img_url, "local_path": local_path}
             )
         else:
             downloaded_images.append(
@@ -154,7 +175,13 @@ def main():
 
     print("等待页面加载...")
     run_agent_browser(["wait", "--load", "networkidle"])
-    time.sleep(2)
+
+    # 滚动触发懒加载图片
+    print("滚动页面触发懒加载...")
+    for _ in range(5):
+        run_agent_browser(["eval", "window.scrollTo(0, document.body.scrollHeight)"])
+        time.sleep(0.5)
+    run_agent_browser(["wait", "--load", "networkidle"])
 
     print("提取元数据...")
     metadata = extract_metadata()
